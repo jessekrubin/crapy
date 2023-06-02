@@ -1,5 +1,12 @@
-from crapy import __version__
+import io
+import json
+
+import crapy as cr
 
 
-def test_version():
-    assert __version__ == '0.1.0'
+def test_print() -> None:
+    string = json.dumps(list(range(100)))
+    sio = io.StringIO()
+    cr.print(string, file=sio)
+    sio.seek(0)
+    assert sio.read() == string + "\n"
