@@ -9,7 +9,7 @@ ruff:
 mypy:
     mypy --ignore-missing-imports .
 
-lint: ruff mypy
+lint: mypy ruff
 
 test:
     pytest

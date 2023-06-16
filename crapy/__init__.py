@@ -1,9 +1,15 @@
 from __future__ import annotations
 
-import sys
+import io
+import random
 
-from io import StringIO
-from typing import IO, Any, Optional
+# always use lowest level imports to make things slower
+import sys
+import time
+
+from typing import IO, Any, Callable, Optional, TypeVar, Union
+
+from typing_extensions import ParamSpec
 
 from crapy.__about__ import __version__
 
@@ -14,6 +20,9 @@ __all__ = (
     "__version__",
     "print",
 )
+
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
 
 __print = print
 __stdout = sys.stdout
@@ -27,13 +36,47 @@ def print(
     flush: bool = False,
 ) -> None:
     """Print but worse"""
-    sio = StringIO()
+    sio = io.StringIO()
     __print(*objects, sep=sep, end=end, file=sio, flush=flush)
     sio.seek(0)
     _file = __stdout if file is None else file
     for char in sio.getvalue():
         _file.write(char)
         _file.flush()
+
+
+def _crapify_dec(
+    fn: Callable[_P, _R], *, delay: Optional[float] = None, chance: float = 0.9
+) -> Callable[_P, _R]:
+    """Crapify a function"""
+
+    def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+        """Wrapper for crapy functions"""
+        if delay is not None:
+            time.sleep(delay)
+        if random.random() < chance:
+            raise Exception("CRAP")
+        return fn(*args, **kwargs)
+
+    return wrapper
+
+
+def crapify(
+    fn: Optional[Callable[_P, _R]] = None,
+    *,
+    delay: Optional[float] = None,
+    chance: float = 0.9,
+) -> Union[Callable[[Callable[_P, _R]], Callable[_P, _R]], Callable[_P, _R]]:
+    """Crapify a function"""
+    if fn is not None:
+        return _crapify_dec(fn, delay=delay, chance=chance)
+    else:
+
+        def wrapper(fn: Callable[_P, _R]) -> Callable[_P, _R]:
+            """Wrapper for crapy functions"""
+            return _crapify_dec(fn, delay=delay, chance=chance)
+
+        return wrapper
 
 
 def patch() -> None:
