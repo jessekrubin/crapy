@@ -38,6 +38,7 @@ def print(
 
 def patch() -> None:
     """TODO: patch globals"""
+    globals()["print"] = print
 
 
 def _init() -> None:
